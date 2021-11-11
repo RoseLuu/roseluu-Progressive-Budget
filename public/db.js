@@ -3,25 +3,12 @@ let db;
 
 //create a new db request for a 'budgetDatabase'
 const request = window.indexedDB.open("budgetDatabase", 1);
-request.onupgradeneeded = function (event) {
-  //   const { oldVersion } = event;
-  //   const newVersion = event.newVersion || db.version;
-
-  //   console.log(`DB Updated from version ${oldVersion} to ${newVersion}`);
-  //   if (db.objectStoreNames.length === 0) {
-  db = event.target.result;
+request.onupgradeneeded = ({ target }) => {
+  const db = target.result;
   db.createObjectStore("budgetDatabase", { autoIncrement: true });
 };
 request.onerror = function (event) {
   console.log(`Opp! ${event.target.errorCode}`);
-};
-
-request.onsuccess = function (event) {
-  db = event.target.result;
-
-  if (navigator.onLine) {
-    checkDatabase();
-  }
 };
 
 function checkDatabase() {
@@ -47,6 +34,15 @@ function checkDatabase() {
     }
   };
 }
+
+request.onsuccess = function (event) {
+  db = event.target.result;
+
+  if (navigator.onLine) {
+    checkDatabase();
+  }
+};
+
 const saveRecord = (record) => {
   const transaction = db.transaction(["budgetDatabase"], "readwrite");
   const store = transaction.objectStore("budgetDatabase");
