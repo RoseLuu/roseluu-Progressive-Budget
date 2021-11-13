@@ -1,19 +1,19 @@
 let db;
-// let budgetVersion;
 
 //create a new db request for a 'budgetDatabase'
-const request = window.indexedDB.open("budgetDatabase", 1);
+const request = indexedDB.open("BudgetDatabase", 1);
+
 request.onupgradeneeded = ({ target }) => {
   const db = target.result;
-  db.createObjectStore("budgetDatabase", { autoIncrement: true });
-};
-request.onerror = function (event) {
-  console.log(`Opp! ${event.target.errorCode}`);
+  db.createObjectStore("BudgetStore", { autoIncrement: true });
 };
 
 function checkDatabase() {
-  const transaction = db.transaction(["budgetDatabase"], "readwrite");
-  const store = transaction.objectStore("budgetDatabase");
+  // Open a transaction on your BudgetStore db
+  let transaction = db.transaction(["BudgetStore"], "readwrite");
+  // access your BudgetStore object
+  const store = transaction.objectStore("BudgetStore");
+  // Get all records from store and set to a variable
   const getAll = store.getAll();
   getAll.onsuccess = function () {
     if (getAll.result.length > 0) {
@@ -26,10 +26,19 @@ function checkDatabase() {
         },
       })
         .then((response) => response.json())
-        .then(() => {
-          transaction = db.transaction(["budgetDatabase"], "readwrite");
-          const currentStore = transaction.objectStore("budgetDatabase");
-          currentStore.clear();
+        .then((res) => {
+          console.log(res);
+          // If returned response is not empty
+          if (res.length !== 0) {
+            //open another transaction to BudgetStore with ability to read and write
+            transaction = db.transaction(["BudgetStore"], "readwrite");
+            //assign current store to a variable
+            const currentStore = transaction.objectStore("BudgetStore");
+            console.log(currentStore);
+            //this will delete everything in the database
+            currentStore.clear();
+            console.log("Clearing store");
+          }
         });
     }
   };
@@ -37,15 +46,23 @@ function checkDatabase() {
 
 request.onsuccess = function (event) {
   db = event.target.result;
-
+  //check if app is online before reading from db
   if (navigator.onLine) {
+    console.log("Back to Online");
     checkDatabase();
   }
 };
 
+request.onerror = function (event) {
+  console.log(`Opp! ${event.target.errorCode}`);
+};
+
 const saveRecord = (record) => {
-  const transaction = db.transaction(["budgetDatabase"], "readwrite");
-  const store = transaction.objectStore("budgetDatabase");
+  //open another transaction to BudgetStore with ability to read and write
+  const transaction = db.transaction(["BudgetStore"], "readwrite");
+  //Access BudgetStore object store
+  const store = transaction.objectStore("BudgetStore");
+  //Add record to store with add method
   store.add(record);
 };
 
